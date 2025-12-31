@@ -16,7 +16,6 @@ texts = {
         "electricity": "⚡ التعرفة الكهربائية للمنزل",
         "water": "💧 التعرفة المائية للمنزل",
         "fuel": "⛽ تعرفة الوقود",
-        "enter_bill": "أدخل قيمة الفاتورة أو الاستهلاك",
         "results": "📊 النتائج",
         "old_bill": "الفاتورة السابقة",
         "new_bill": "الفاتورة الجديدة",
@@ -27,7 +26,6 @@ texts = {
         "liters_used": "عدد اللترات المستخدمة",
         "done_by": "Done by: Eng. Mohamed Jaber ALASHEERI",
         "share_text": "📤 شارك الحاسبة مع الآخرين",
-        "share_button": "📤 نشر الحاسبة",
         "share_info": "يمكنك مشاركة الرابط التالي مع الآخرين:"
     },
     "en": {
@@ -35,7 +33,6 @@ texts = {
         "electricity": "⚡ EWA Residential Electricity Tariff",
         "water": "💧 EWA Residential Water Tariff",
         "fuel": "⛽ Fuel Tariff",
-        "enter_bill": "Enter bill amount or usage",
         "results": "📊 Results",
         "old_bill": "Previous bill",
         "new_bill": "Current bill",
@@ -46,7 +43,6 @@ texts = {
         "liters_used": "Liters used",
         "done_by": "Done by: Eng. Mohamed Jaber ALASHEERI",
         "share_text": "📤 Share the calculator with others",
-        "share_button": "📤 Publish Calculator",
         "share_info": "You can share the following link with others:"
     }
 }
@@ -64,8 +60,10 @@ tab1, tab2, tab3 = st.tabs([t["electricity"], t["water"], t["fuel"]])
 # ⚡ الكهرباء
 # ---------------------------
 with tab1:
-    bill = st.number_input(f"أدخل قيمة الفاتورة (د.ب)", min_value=0.0, step=1.0, format="%.2f", key="elec_bill")
-    usage = st.number_input(f"أدخل الاستهلاك (kWh)", min_value=0.0, step=1.0, format="%.1f", key="elec_usage")
+    bill_label = "أدخل قيمة الفاتورة (د.ب)" if lang=="العربية" else "Enter bill amount (BHD)"
+    usage_label = "أدخل الاستهلاك (kWh)" if lang=="العربية" else "Enter consumption (kWh)"
+    bill = st.number_input(bill_label, min_value=0.0, step=1.0, format="%.2f", key="elec_bill")
+    usage = st.number_input(usage_label, min_value=0.0, step=1.0, format="%.1f", key="elec_usage")
 
     slabs = [
         (3000, 0.003, 0.003),
@@ -94,9 +92,9 @@ with tab1:
 
     with st.container():
         st.subheader(t["results"])
-        st.metric(t["old_bill"], f"{old_cost:.2f} د.ب")
-        st.metric(t["new_bill"], f"{new_cost:.2f} د.ب")
-        st.metric(t["difference"], f"{diff:.2f} د.ب", f"{percent:.1f}%")
+        st.metric(t["old_bill"], f"{old_cost:.3f} د.ب")
+        st.metric(t["new_bill"], f"{new_cost:.3f} د.ب")
+        st.metric(t["difference"], f"{diff:.3f} د.ب", f"{percent:.1f}%")
         st.info(f"{t['kwh_used']}: {sum(usage_list):.1f} kWh")
 
         labels = slab_names_ar if lang=="العربية" else slab_names_en
@@ -108,7 +106,7 @@ with tab1:
                 name=labels[i],
                 orientation="h",
                 marker=dict(color=colors[i], line=dict(color='black', width=1)),
-                hovertemplate="%{x:.2f} kWh<br>%{fullData.name}"
+                hovertemplate="%{x:.3f} kWh<br>%{fullData.name}"
             ))
         fig.update_layout(
             barmode='stack',
@@ -123,8 +121,10 @@ with tab1:
 # 💧 الماء
 # ---------------------------
 with tab2:
-    bill = st.number_input(f"أدخل قيمة الفاتورة (د.ب)", min_value=0.0, step=1.0, format="%.2f", key="water_bill")
-    usage = st.number_input(f"أدخل الاستهلاك (م³)", min_value=0.0, step=1.0, format="%.1f", key="water_usage")
+    bill_label = "أدخل قيمة الفاتورة (د.ب)" if lang=="العربية" else "Enter bill amount (BHD)"
+    usage_label = "أدخل الاستهلاك (م³)" if lang=="العربية" else "Enter consumption (m³)"
+    bill = st.number_input(bill_label, min_value=0.0, step=1.0, format="%.2f", key="water_bill")
+    usage = st.number_input(usage_label, min_value=0.0, step=1.0, format="%.1f", key="water_usage")
 
     slabs = [
         (60, 0.025,0.025),
@@ -153,9 +153,9 @@ with tab2:
 
     with st.container():
         st.subheader(t["results"])
-        st.metric(t["old_bill"], f"{old_cost:.2f} د.ب")
-        st.metric(t["new_bill"], f"{new_cost:.2f} د.ب")
-        st.metric(t["difference"], f"{diff:.2f} د.ب", f"{percent:.1f}%")
+        st.metric(t["old_bill"], f"{old_cost:.3f} د.ب")
+        st.metric(t["new_bill"], f"{new_cost:.3f} د.ب")
+        st.metric(t["difference"], f"{diff:.3f} د.ب", f"{percent:.1f}%")
         st.info(f"{t['m3_used']}: {sum(usage_list):.1f} م³")
 
         labels = slab_names_ar if lang=="العربية" else slab_names_en
@@ -167,7 +167,7 @@ with tab2:
                 name=labels[i],
                 orientation="h",
                 marker=dict(color=colors[i], line=dict(color='black', width=1)),
-                hovertemplate="%{x:.2f} m³<br>%{fullData.name}"
+                hovertemplate="%{x:.3f} m³<br>%{fullData.name}"
             ))
         fig.update_layout(
             barmode='stack',
@@ -182,7 +182,6 @@ with tab2:
 # ⛽ البترول
 # ---------------------------
 with tab3:
-    # اقرأ الأسعار من CSV
     fuel_prices = pd.DataFrame({
         "fuel":["جيد 91","ممتاز 95","سوبر 98","ديزل"],
         "old_price":[0.14,0.20,0.235,0.18],
@@ -193,7 +192,7 @@ with tab3:
     total_liters = 0
 
     for index, row in fuel_prices.iterrows():
-        liters = st.number_input(f"{row['fuel']} – عدد اللترات (لتر)", min_value=0.0, step=1.0)
+        liters = st.number_input(f"{row['fuel']} – عدد اللترات (لتر)", min_value=0.0, step=0.001, format="%.3f")
         total_liters += liters
         total_old += liters*row['old_price']
         total_new += liters*row['new_price']
@@ -203,21 +202,21 @@ with tab3:
         percent = (diff/total_old*100)
         with st.container():
             st.subheader(t["results"])
-            st.metric(t["old_bill"], f"{total_old:.2f} د.ب")
-            st.metric(t["new_bill"], f"{total_new:.2f} د.ب")
-            st.metric(t["difference"], f"{diff:.2f} د.ب", f"{percent:.1f}%")
-            st.info(f"{t['liters_used']}: {total_liters:.1f} لتر")
+            st.metric(t["old_bill"], f"{total_old:.3f} د.ب")
+            st.metric(t["new_bill"], f"{total_new:.3f} د.ب")
+            st.metric(t["difference"], f"{diff:.3f} د.ب", f"{percent:.1f}%")
+            st.info(f"{t['liters_used']}: {total_liters:.3f} لتر")
 
 # ---------------------------
-# زر نشر الحاسبة
+# زر نشر الحاسبة بدون حساب
 # ---------------------------
 with st.container():
     st.markdown(f"### {t['share_text']}")
-    app_url = "https://bahrain-utility-tariff-calculator.streamlit.app"
-    if st.button(t["share_button"]):
-        st.info(f"{t['share_info']} [الرابط]({app_url})")
+    app_url = "https://bahrain-utility-tariff-calculator.streamlit.app"  # الرابط النهائي
+    st.info(f"{t['share_info']} [اضغط هنا لنسخ الرابط]({app_url})")
 
 
 st.markdown("---")
 st.caption(t["done_by"])
+
 
