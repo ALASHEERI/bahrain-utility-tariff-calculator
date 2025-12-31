@@ -217,8 +217,7 @@ with st.container():
     if st.button(t["share_button"]):
         st.info(f"{t['share_info']} [الرابط]({app_url})")
 
-# ---------------------------
-# اسمك في الأسفل
-# ---------------------------
+
 st.markdown("---")
 st.caption(t["done_by"])
+
