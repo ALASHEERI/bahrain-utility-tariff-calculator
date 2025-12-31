@@ -1,0 +1,224 @@
+import streamlit as st
+import plotly.graph_objects as go
+import pandas as pd
+
+# ---------------------------
+# إعداد الصفحة
+# ---------------------------
+st.set_page_config(page_title="Bahrain Utility Tariff Calculator", layout="centered")
+
+# اختيار اللغة
+lang = st.selectbox("Language / اللغة", ["English", "العربية"])
+
+texts = {
+    "ar": {
+        "title": "حاسبة التعرفة الكهربائية، المائية والبترولية – البحرين",
+        "electricity": "⚡ التعرفة الكهربائية للمنزل",
+        "water": "💧 التعرفة المائية للمنزل",
+        "fuel": "⛽ تعرفة الوقود",
+        "enter_bill": "أدخل قيمة الفاتورة أو الاستهلاك",
+        "results": "📊 النتائج",
+        "old_bill": "الفاتورة السابقة",
+        "new_bill": "الفاتورة الجديدة",
+        "difference": "الفرق",
+        "increase": "نسبة الزيادة %",
+        "kwh_used": "عدد الوحدات المستخدمة",
+        "m3_used": "عدد المتر المكعب المستخدم",
+        "liters_used": "عدد اللترات المستخدمة",
+        "done_by": "Done by: Eng. Mohamed Jaber ALASHEERI",
+        "share_text": "📤 شارك الحاسبة مع الآخرين",
+        "share_button": "📤 نشر الحاسبة",
+        "share_info": "يمكنك مشاركة الرابط التالي مع الآخرين:"
+    },
+    "en": {
+        "title": "Bahrain Utility Tariff Calculator",
+        "electricity": "⚡ EWA Residential Electricity Tariff",
+        "water": "💧 EWA Residential Water Tariff",
+        "fuel": "⛽ Fuel Tariff",
+        "enter_bill": "Enter bill amount or usage",
+        "results": "📊 Results",
+        "old_bill": "Previous bill",
+        "new_bill": "Current bill",
+        "difference": "Difference",
+        "increase": "Increase %",
+        "kwh_used": "Units consumed",
+        "m3_used": "Cubic meters used",
+        "liters_used": "Liters used",
+        "done_by": "Done by: Eng. Mohamed Jaber ALASHEERI",
+        "share_text": "📤 Share the calculator with others",
+        "share_button": "📤 Publish Calculator",
+        "share_info": "You can share the following link with others:"
+    }
+}
+
+t = texts["ar"] if lang=="العربية" else texts["en"]
+
+st.title(t["title"])
+
+# ---------------------------
+# Tabs للكهرباء والماء والبترول
+# ---------------------------
+tab1, tab2, tab3 = st.tabs([t["electricity"], t["water"], t["fuel"]])
+
+# ---------------------------
+# ⚡ الكهرباء
+# ---------------------------
+with tab1:
+    bill = st.number_input(f"أدخل قيمة الفاتورة (د.ب)", min_value=0.0, step=1.0, format="%.2f", key="elec_bill")
+    usage = st.number_input(f"أدخل الاستهلاك (kWh)", min_value=0.0, step=1.0, format="%.1f", key="elec_usage")
+
+    slabs = [
+        (3000, 0.003, 0.003),
+        (2000, 0.009, 0.009),
+        (float("inf"), 0.016, 0.032)
+    ]
+    slab_names_ar = ["الشريحة الأولى","الشريحة الثانية","الشريحة الثالثة"]
+    slab_names_en = ["First slab","Second slab","Third slab"]
+    colors = ["#27ae60","#f1c40f","#e74c3c"]
+
+    usage_list = [0,0,0]
+    remaining = usage
+    for i,(limit,_,_) in enumerate(slabs):
+        if remaining>limit:
+            usage_list[i]=limit
+            remaining-=limit
+        else:
+            usage_list[i]=remaining
+            remaining=0
+            break
+
+    old_cost = sum(u*s[1] for u,s in zip(usage_list, slabs))
+    new_cost = sum(u*s[2] for u,s in zip(usage_list, slabs))
+    diff = new_cost - old_cost
+    percent = (diff/old_cost*100) if old_cost>0 else 0
+
+    with st.container():
+        st.subheader(t["results"])
+        st.metric(t["old_bill"], f"{old_cost:.2f} د.ب")
+        st.metric(t["new_bill"], f"{new_cost:.2f} د.ب")
+        st.metric(t["difference"], f"{diff:.2f} د.ب", f"{percent:.1f}%")
+        st.info(f"{t['kwh_used']}: {sum(usage_list):.1f} kWh")
+
+        labels = slab_names_ar if lang=="العربية" else slab_names_en
+        fig = go.Figure()
+        for i in range(3):
+            fig.add_trace(go.Bar(
+                y=["Usage" if lang=="English" else "الاستهلاك"],
+                x=[usage_list[i]],
+                name=labels[i],
+                orientation="h",
+                marker=dict(color=colors[i], line=dict(color='black', width=1)),
+                hovertemplate="%{x:.2f} kWh<br>%{fullData.name}"
+            ))
+        fig.update_layout(
+            barmode='stack',
+            height=300,
+            xaxis_title="kWh",
+            yaxis_visible=False,
+            legend_title_text="Slab" if lang=="English" else "الشريحة"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+# ---------------------------
+# 💧 الماء
+# ---------------------------
+with tab2:
+    bill = st.number_input(f"أدخل قيمة الفاتورة (د.ب)", min_value=0.0, step=1.0, format="%.2f", key="water_bill")
+    usage = st.number_input(f"أدخل الاستهلاك (م³)", min_value=0.0, step=1.0, format="%.1f", key="water_usage")
+
+    slabs = [
+        (60, 0.025,0.025),
+        (40, 0.08,0.08),
+        (float("inf"), 0.2,0.775)
+    ]
+    slab_names_ar = ["الشريحة الأولى","الشريحة الثانية","الشريحة الثالثة"]
+    slab_names_en = ["First slab","Second slab","Third slab"]
+    colors = ["#3498db","#f1c40f","#e74c3c"]
+
+    usage_list = [0,0,0]
+    remaining = usage
+    for i,(limit,_,_) in enumerate(slabs):
+        if remaining>limit:
+            usage_list[i]=limit
+            remaining-=limit
+        else:
+            usage_list[i]=remaining
+            remaining=0
+            break
+
+    old_cost = sum(u*s[1] for u,s in zip(usage_list, slabs))
+    new_cost = sum(u*s[2] for u,s in zip(usage_list, slabs))
+    diff = new_cost - old_cost
+    percent = (diff/old_cost*100) if old_cost>0 else 0
+
+    with st.container():
+        st.subheader(t["results"])
+        st.metric(t["old_bill"], f"{old_cost:.2f} د.ب")
+        st.metric(t["new_bill"], f"{new_cost:.2f} د.ب")
+        st.metric(t["difference"], f"{diff:.2f} د.ب", f"{percent:.1f}%")
+        st.info(f"{t['m3_used']}: {sum(usage_list):.1f} م³")
+
+        labels = slab_names_ar if lang=="العربية" else slab_names_en
+        fig = go.Figure()
+        for i in range(3):
+            fig.add_trace(go.Bar(
+                y=["Usage" if lang=="English" else "الاستهلاك"],
+                x=[usage_list[i]],
+                name=labels[i],
+                orientation="h",
+                marker=dict(color=colors[i], line=dict(color='black', width=1)),
+                hovertemplate="%{x:.2f} m³<br>%{fullData.name}"
+            ))
+        fig.update_layout(
+            barmode='stack',
+            height=300,
+            xaxis_title="م³",
+            yaxis_visible=False,
+            legend_title_text="Slab" if lang=="English" else "الشريحة"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+# ---------------------------
+# ⛽ البترول
+# ---------------------------
+with tab3:
+    # اقرأ الأسعار من CSV
+    fuel_prices = pd.DataFrame({
+        "fuel":["جيد 91","ممتاز 95","سوبر 98","ديزل"],
+        "old_price":[0.14,0.20,0.235,0.18],
+        "new_price":[0.22,0.235,0.265,0.2]
+    })
+    total_old = 0
+    total_new = 0
+    total_liters = 0
+
+    for index, row in fuel_prices.iterrows():
+        liters = st.number_input(f"{row['fuel']} – عدد اللترات (لتر)", min_value=0.0, step=1.0)
+        total_liters += liters
+        total_old += liters*row['old_price']
+        total_new += liters*row['new_price']
+
+    if total_old>0:
+        diff = total_new - total_old
+        percent = (diff/total_old*100)
+        with st.container():
+            st.subheader(t["results"])
+            st.metric(t["old_bill"], f"{total_old:.2f} د.ب")
+            st.metric(t["new_bill"], f"{total_new:.2f} د.ب")
+            st.metric(t["difference"], f"{diff:.2f} د.ب", f"{percent:.1f}%")
+            st.info(f"{t['liters_used']}: {total_liters:.1f} لتر")
+
+# ---------------------------
+# زر نشر الحاسبة
+# ---------------------------
+with st.container():
+    st.markdown(f"### {t['share_text']}")
+    app_url = "https://bahrain-utility-tariff-calculator.streamlit.app"
+    if st.button(t["share_button"]):
+        st.info(f"{t['share_info']} [الرابط]({app_url})")
+
+# ---------------------------
+# اسمك في الأسفل
+# ---------------------------
+st.markdown("---")
+st.caption(t["done_by"])
