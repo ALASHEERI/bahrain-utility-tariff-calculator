@@ -60,10 +60,9 @@ tab1, tab2, tab3 = st.tabs([t["electricity"], t["water"], t["fuel"]])
 # ⚡ الكهرباء
 # ---------------------------
 with tab1:
-    bill_label = "أدخل قيمة الفاتورة (د.ب)" if lang=="العربية" else "Enter bill amount (BHD)"
-    usage_label = "أدخل الاستهلاك (kWh)" if lang=="العربية" else "Enter consumption (kWh)"
-    bill = st.number_input(bill_label, min_value=0.0, step=1.0, format="%.2f", key="elec_bill")
-    usage = st.number_input(usage_label, min_value=0.0, step=1.0, format="%.1f", key="elec_usage")
+    # إدخال الفاتورة أو الوحدات
+    bill_input = st.number_input("أدخل قيمة الفاتورة السابقة (د.ب)" if lang=="العربية" else "Enter previous bill (BHD)", min_value=0.0, step=0.01, format="%.2f")
+    usage_input = st.number_input("أدخل الاستهلاك (kWh)" if lang=="العربية" else "Enter consumption (kWh)", min_value=0.0, step=1.0, format="%.1f")
 
     slabs = [
         (3000, 0.003, 0.003),
@@ -74,6 +73,21 @@ with tab1:
     slab_names_en = ["First slab","Second slab","Third slab"]
     colors = ["#27ae60","#f1c40f","#e74c3c"]
 
+    # حساب الوحدات لو المستخدم أدخل الفاتورة فقط
+    if bill_input>0 and usage_input==0:
+        remaining = bill_input
+        usage = 0
+        for limit, old_price, _ in slabs:
+            max_cost = limit*old_price
+            if remaining > max_cost:
+                usage += limit
+                remaining -= max_cost
+            else:
+                usage += remaining/old_price
+                break
+    else:
+        usage = usage_input
+
     usage_list = [0,0,0]
     remaining = usage
     for i,(limit,_,_) in enumerate(slabs):
@@ -90,41 +104,38 @@ with tab1:
     diff = new_cost - old_cost
     percent = (diff/old_cost*100) if old_cost>0 else 0
 
-    with st.container():
-        st.subheader(t["results"])
-        st.metric(t["old_bill"], f"{old_cost:.3f} د.ب")
-        st.metric(t["new_bill"], f"{new_cost:.3f} د.ب")
-        st.metric(t["difference"], f"{diff:.3f} د.ب", f"{percent:.1f}%")
-        st.info(f"{t['kwh_used']}: {sum(usage_list):.1f} kWh")
+    st.subheader(t["results"])
+    st.metric(t["old_bill"], f"{old_cost:.3f} د.ب")
+    st.metric(t["new_bill"], f"{new_cost:.3f} د.ب")
+    st.metric(t["difference"], f"{diff:.3f} د.ب", f"{percent:.1f}%")
+    st.info(f"{t['kwh_used']}: {sum(usage_list):.1f} kWh")
 
-        labels = slab_names_ar if lang=="العربية" else slab_names_en
-        fig = go.Figure()
-        for i in range(3):
-            fig.add_trace(go.Bar(
-                y=["Usage" if lang=="English" else "الاستهلاك"],
-                x=[usage_list[i]],
-                name=labels[i],
-                orientation="h",
-                marker=dict(color=colors[i], line=dict(color='black', width=1)),
-                hovertemplate="%{x:.3f} kWh<br>%{fullData.name}"
-            ))
-        fig.update_layout(
-            barmode='stack',
-            height=300,
-            xaxis_title="kWh",
-            yaxis_visible=False,
-            legend_title_text="Slab" if lang=="English" else "الشريحة"
-        )
-        st.plotly_chart(fig, use_container_width=True)
+    labels = slab_names_ar if lang=="العربية" else slab_names_en
+    fig = go.Figure()
+    for i in range(3):
+        fig.add_trace(go.Bar(
+            y=["Usage" if lang=="English" else "الاستهلاك"],
+            x=[usage_list[i]],
+            name=labels[i],
+            orientation="h",
+            marker=dict(color=colors[i], line=dict(color='black', width=1)),
+            hovertemplate="%{x:.3f} kWh<br>%{fullData.name}"
+        ))
+    fig.update_layout(
+        barmode='stack',
+        height=300,
+        xaxis_title="kWh",
+        yaxis_visible=False,
+        legend_title_text="Slab" if lang=="English" else "الشريحة"
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 # ---------------------------
 # 💧 الماء
 # ---------------------------
 with tab2:
-    bill_label = "أدخل قيمة الفاتورة (د.ب)" if lang=="العربية" else "Enter bill amount (BHD)"
-    usage_label = "أدخل الاستهلاك (م³)" if lang=="العربية" else "Enter consumption (m³)"
-    bill = st.number_input(bill_label, min_value=0.0, step=1.0, format="%.2f", key="water_bill")
-    usage = st.number_input(usage_label, min_value=0.0, step=1.0, format="%.1f", key="water_usage")
+    bill_input = st.number_input("أدخل قيمة الفاتورة السابقة (د.ب)" if lang=="العربية" else "Enter previous bill (BHD)", min_value=0.0, step=0.01, format="%.2f", key="water_bill")
+    usage_input = st.number_input("أدخل الاستهلاك (م³)" if lang=="العربية" else "Enter consumption (m³)", min_value=0.0, step=1.0, format="%.1f", key="water_usage")
 
     slabs = [
         (60, 0.025,0.025),
@@ -135,6 +146,20 @@ with tab2:
     slab_names_en = ["First slab","Second slab","Third slab"]
     colors = ["#3498db","#f1c40f","#e74c3c"]
 
+    if bill_input>0 and usage_input==0:
+        remaining = bill_input
+        usage = 0
+        for limit, old_price, _ in slabs:
+            max_cost = limit*old_price
+            if remaining>max_cost:
+                usage += limit
+                remaining -= max_cost
+            else:
+                usage += remaining/old_price
+                break
+    else:
+        usage = usage_input
+
     usage_list = [0,0,0]
     remaining = usage
     for i,(limit,_,_) in enumerate(slabs):
@@ -151,32 +176,31 @@ with tab2:
     diff = new_cost - old_cost
     percent = (diff/old_cost*100) if old_cost>0 else 0
 
-    with st.container():
-        st.subheader(t["results"])
-        st.metric(t["old_bill"], f"{old_cost:.3f} د.ب")
-        st.metric(t["new_bill"], f"{new_cost:.3f} د.ب")
-        st.metric(t["difference"], f"{diff:.3f} د.ب", f"{percent:.1f}%")
-        st.info(f"{t['m3_used']}: {sum(usage_list):.1f} م³")
+    st.subheader(t["results"])
+    st.metric(t["old_bill"], f"{old_cost:.3f} د.ب")
+    st.metric(t["new_bill"], f"{new_cost:.3f} د.ب")
+    st.metric(t["difference"], f"{diff:.3f} د.ب", f"{percent:.1f}%")
+    st.info(f"{t['m3_used']}: {sum(usage_list):.1f} م³")
 
-        labels = slab_names_ar if lang=="العربية" else slab_names_en
-        fig = go.Figure()
-        for i in range(3):
-            fig.add_trace(go.Bar(
-                y=["Usage" if lang=="English" else "الاستهلاك"],
-                x=[usage_list[i]],
-                name=labels[i],
-                orientation="h",
-                marker=dict(color=colors[i], line=dict(color='black', width=1)),
-                hovertemplate="%{x:.3f} m³<br>%{fullData.name}"
-            ))
-        fig.update_layout(
-            barmode='stack',
-            height=300,
-            xaxis_title="م³",
-            yaxis_visible=False,
-            legend_title_text="Slab" if lang=="English" else "الشريحة"
-        )
-        st.plotly_chart(fig, use_container_width=True)
+    labels = slab_names_ar if lang=="العربية" else slab_names_en
+    fig = go.Figure()
+    for i in range(3):
+        fig.add_trace(go.Bar(
+            y=["Usage" if lang=="English" else "الاستهلاك"],
+            x=[usage_list[i]],
+            name=labels[i],
+            orientation="h",
+            marker=dict(color=colors[i], line=dict(color='black', width=1)),
+            hovertemplate="%{x:.3f} m³<br>%{fullData.name}"
+        ))
+    fig.update_layout(
+        barmode='stack',
+        height=300,
+        xaxis_title="م³",
+        yaxis_visible=False,
+        legend_title_text="Slab" if lang=="English" else "الشريحة"
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 # ---------------------------
 # ⛽ البترول
@@ -200,23 +224,20 @@ with tab3:
     if total_old>0:
         diff = total_new - total_old
         percent = (diff/total_old*100)
-        with st.container():
-            st.subheader(t["results"])
-            st.metric(t["old_bill"], f"{total_old:.3f} د.ب")
-            st.metric(t["new_bill"], f"{total_new:.3f} د.ب")
-            st.metric(t["difference"], f"{diff:.3f} د.ب", f"{percent:.1f}%")
-            st.info(f"{t['liters_used']}: {total_liters:.3f} لتر")
+        st.subheader(t["results"])
+        st.metric(t["old_bill"], f"{total_old:.3f} د.ب")
+        st.metric(t["new_bill"], f"{total_new:.3f} د.ب")
+        st.metric(t["difference"], f"{diff:.3f} د.ب", f"{percent:.1f}%")
+        st.info(f"{t['liters_used']}: {total_liters:.3f} لتر")
 
 # ---------------------------
 # زر نشر الحاسبة بدون حساب
 # ---------------------------
-with st.container():
-    st.markdown(f"### {t['share_text']}")
-    app_url = "https://bahrain-utility-tariff-calculator.streamlit.app"  # الرابط النهائي
-    st.info(f"{t['share_info']} [اضغط هنا لنسخ الرابط]({app_url})")
-
-
 st.markdown("---")
-st.caption(t["done_by"])
+st.markdown(f"### {t['share_text']}")
+app_url = "https://bahrain-utility-tariff-calculator.streamlit.app"
+st.info(f"{t['share_info']} [اضغط هنا لنسخ الرابط]({app_url})")
 
+
+st.caption(t["done_by"])
 
