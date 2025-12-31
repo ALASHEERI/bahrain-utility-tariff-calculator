@@ -2,12 +2,9 @@ import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
 
-# ---------------------------
-# إعداد الصفحة
-# ---------------------------
+
 st.set_page_config(page_title="Bahrain Utility Tariff Calculator", layout="centered")
 
-# اختيار اللغة
 lang = st.selectbox("Language / اللغة", ["English", "العربية"])
 
 texts = {
@@ -57,14 +54,12 @@ t = texts["ar"] if lang=="العربية" else texts["en"]
 
 st.title(t["title"])
 
-# ---------------------------
-# Tabs للكهرباء والماء والبترول
-# ---------------------------
+
 tab1, tab2, tab3 = st.tabs([t["electricity"], t["water"], t["fuel"]])
 
-# ---------------------------
+
 # ⚡ الكهرباء
-# ---------------------------
+
 with tab1:
     input_type = st.radio(t["enter_bill"], [t["enter_bill"], t["enter_usage"]], horizontal=True, key="elec_input_type")
     value = st.number_input("", min_value=0.0, step=1.0, key="elec_value")
@@ -125,9 +120,7 @@ with tab1:
         if input_type==t["enter_bill"]:
             st.info(f"{t['kwh_used']}: {sum(usage):.1f}")
 
-        # ---------------------------
-        # Visuals جذابة
-        # ---------------------------
+        
         labels = slab_names_ar if lang=="العربية" else slab_names_en
         fig = go.Figure()
         for i in range(3):
@@ -147,9 +140,9 @@ with tab1:
         )
         st.plotly_chart(fig, use_container_width=True)
 
-# ---------------------------
+
 # 💧 الماء
-# ---------------------------
+
 with tab2:
     input_type = st.radio(t["enter_bill"], [t["enter_bill"], t["enter_usage"]], horizontal=True, key="water_input_type")
     value = st.number_input("", min_value=0.0, step=1.0, key="water_value")
@@ -210,9 +203,7 @@ with tab2:
         if input_type==t["enter_bill"]:
             st.info(f"{t['m3_used']}: {sum(usage):.1f}")
 
-        # ---------------------------
-        # Visuals جذابة
-        # ---------------------------
+       
         labels = slab_names_ar if lang=="العربية" else slab_names_en
         fig = go.Figure()
         for i in range(3):
@@ -232,9 +223,9 @@ with tab2:
         )
         st.plotly_chart(fig, use_container_width=True)
 
-# ---------------------------
+
 # ⛽ البترول
-# ---------------------------
+
 with tab3:
     fuel_prices = pd.read_csv("fuel_prices.csv")
     total_old = 0
@@ -256,18 +247,17 @@ with tab3:
         st.metric(t["difference"], f"{diff:.2f} د.ب", f"{percent:.1f}%")
         st.info(f"{t['liters_used']}: {total_liters:.1f}")
 
-# ---------------------------
+
 # زر نشر الحاسبة
-# ---------------------------
+
 st.markdown("---")
 st.markdown(f"### {t['share_text']}")
 app_url = "https://bahrain-utility-tariff-calculator.streamlit.app"
 if st.button(t["share_button"]):
     st.info(f"{t['share_info']} [الرابط]({app_url})")
 
-# ---------------------------
-# اسمك في الأسفل
-# ---------------------------
+
 st.markdown("---")
 st.caption(t["done_by"])
+
 
